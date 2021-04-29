@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "lint": "eslint **/*.js",
-    "test": "jest --coverage --verbose",
+    "test": "jest --verbose",
     "test-watch": "jest --watchAll --coverage"
   },
   "repository": {
