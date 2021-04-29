@@ -83,23 +83,60 @@ describe('V1 (Unauthenticated API) routes', () => {
 })
 
 describe('V2 (Authenticated API Routes)', () => {
-  it('POST /api/v2/:model with a bearer token that has create permissions adds an item to the DB and returns an object with the added item', async () => {
+  let admin, token;
 
+  beforeAll(async () => {
+    admin = await mockRequest.post('/signup').send({ username: 'v2admin', password: 'password', role: 'admin' });
+    token = admin.body.token;
+  });
+
+  it('POST /api/v2/:model with a bearer token that has create permissions adds an item to the DB and returns an object with the added item', async () => {
+    const response = await mockRequest.post('/api/v2/food').send({ name: 'Mango', calories: 100, type: 'FRUIT' }).auth(token, { type: 'bearer' });
+
+    expect(response.status).toBe(201);
+    expect(response.body._id).toBeDefined();
+    expect(response.body.name).toEqual('Mango');
+    expect(response.body.calories).toEqual(100);
+    expect(response.body.type).toEqual('FRUIT');
   })
 
   it('GET /api/v2/:model with a bearer token that has read permissions returns a list of :model items', async () => {
+    await mockRequest.post('/api/v2/food').send({ name: 'Broccoli', calories: 150, type: 'VEGETABLE' }).auth(token, { type: 'bearer' });
+    const response = await mockRequest.get('/api/v2/food').auth(token, { type: 'bearer' });
 
+    expect(response.status).toEqual(200);
+    expect(response.body[0].name).toEqual('Mango');
+    expect(response.body[1].name).toEqual('Broccoli');
   })
 
   it('GET /api/v2/:model/ID with a bearer token that has read permissions returns a single item by ID', async () => {
+    const tofu = await mockRequest.post('/api/v2/food').send({ name: 'Tofu', calories: 300, type: 'PROTIEN' }).auth(token, { type: 'bearer' });
 
+    const response = await mockRequest.get(`/api/v2/food/${tofu.body._id}`).auth(token, { type: 'bearer' });
+    expect(response.body.name).toEqual('Tofu');
+    expect(response.body._id).toEqual(tofu.body._id);
+    expect(response.body.calories).toEqual(300);
+    expect(response.body.type).toEqual('PROTIEN');
   })
 
   it('PUT /api/v2/:model/ID with a bearer token that has update permissions returns a single, updated item by ID', async () => {
+    const seitan = await mockRequest.post('/api/v2/food').send({ name: 'Seitan', calories: 500, type: 'PROTIEN' }).auth(token, { type: 'bearer' });
 
+    const response = await mockRequest.put(`/api/v2/food/${seitan.body._id}`).send({ name: 'Tempeh', calories: 300, type: 'PROTIEN' }).auth(token, { type: 'bearer' });
+    expect(response.body.name).toEqual('Tempeh');
+    expect(response.body._id).toEqual(seitan.body._id);
+    expect(response.body.calories).toEqual(300);
+    expect(response.body.type).toEqual('PROTIEN');
   })
 
   it('DELETE /api/v2/:model/ID with a bearer token that has delete permissions returns an empty object. Subsequent GET for the same ID should result in nothing found', async () => {
+    const pepperoni = await mockRequest.post('/api/v2/food').send({ name: 'Pepperoni', calories: 200, type: 'PROTIEN' }).auth(token, { type: 'bearer' });
+    const response = await mockRequest.delete(`/api/v2/food/${pepperoni.body._id}`).auth(token, { type: 'bearer' });
 
+    expect(response.status).toEqual(200);
+    expect(response.body.name).toEqual('Pepperoni');
+
+    const getResponse = await mockRequest.get(`/api/v2/food/${pepperoni.body._id}`).auth(token, { type: 'bearer' });
+    expect(getResponse.body).toEqual(null);
   })
 })
