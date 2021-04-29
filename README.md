@@ -1,4 +1,4 @@
-# Lab 8 - Bearer Auth
+# Lab 8 - Access Control
 
 ## Author: Chris Gantt
 
