@@ -1,7 +1,7 @@
 'use strict';
 
 process.env.SECRET = "toes";
-const server = require('../src/server');
+const server = require('../src/server.js').server;
 const supergoose = require('@code-fellows/supergoose');
 
 const mockRequest = supergoose(server);
@@ -9,14 +9,22 @@ const mockRequest = supergoose(server);
 describe('AUTH Routes', () => {
   it('POST /signup creates a new user and sends an object with the user and the token to the client', async () => {
     
-    // const response = await mockRequest.post('/signup').send({ username: 'testadmin5', password: 'password', role: 'admin' });
+    const response = await mockRequest.post('/signup').send({ username: 'testadmin', password: 'password', role: 'admin' });
 
-    // console.log(response);
-    expect(true).toEqual(true);
+    expect(response.status).toBe(201);
+    expect(response.body.token).toBeDefined();
+    expect(response.body.user._id).toBeDefined();
+    expect(response.body.user.username).toEqual('testadmin');
+    expect(response.body.user.role).toEqual('admin');
   });
 
-  it('POST /signin with basic authentication headers logs in a user and sends an object with the user and the token to the client', () => {
-
+  it('POST /signin with basic authentication headers logs in a user and sends an object with the user and the token to the client', async () => {
+    const response = await mockRequest.post('/signin').auth('testadmin', 'password');
+    
+    expect(response.status).toBe(200);
+    expect(response.body.token).toBeDefined();
+    expect(response.body.user._id).toBeDefined();
+    expect(response.body.user.username).toEqual('testadmin');
   });
 })
 
